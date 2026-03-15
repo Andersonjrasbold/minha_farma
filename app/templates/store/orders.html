@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block title %}Pedidos recebidos | Minha Farma{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">Pedidos recebidos</h1>
+        <p class="text-muted mb-0">{{ store.name }}</p>
+    </div>
+    <a class="btn btn-outline-secondary" href="{{ url_for('store.store_dashboard', store_id=store.id) }}">Voltar ao painel</a>
+</div>
+
+<ul class="nav nav-pills mb-4">
+    <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('store.store_dashboard', store_id=store.id) }}">Dados da loja</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('store.store_offers', store_id=store.id) }}">Ofertas</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" href="{{ url_for('store.store_orders', store_id=store.id) }}">Pedidos recebidos</a>
+    </li>
+</ul>
+
+<form class="row g-3 mb-4" method="get" action="{{ url_for('store.store_orders', store_id=store.id) }}">
+    <div class="col-md-4">
+        <label class="form-label">Filtrar por status</label>
+        <select name="status" class="form-select" onchange="this.form.submit()">
+            <option value="">Todos</option>
+            {% for status in status_options %}
+                <option value="{{ status }}" {% if status == status_filter %}selected{% endif %}>{{ status|capitalize }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-4 d-flex align-items-end">
+        <a class="btn btn-outline-secondary" href="{{ url_for('store.store_orders_export', store_id=store.id, status=status_filter) }}">
+            Exportar CSV
+        </a>
+    </div>
+</form>
+
+<div class="card border-0 shadow-sm rounded-4">
+    <div class="card-body">
+        <form method="post" action="{{ url_for('store.store_orders', store_id=store.id) }}">
+            <div class="row g-3 align-items-end mb-4">
+                <div class="col-md-4">
+                    <label class="form-label">Ação em lote</label>
+                    <select class="form-select" name="bulk_action">
+                        <option value="pendente">Marcar como pendente</option>
+                        <option value="preparando">Marcar como preparando</option>
+                        <option value="enviado">Marcar como enviado</option>
+                        <option value="entregue">Marcar como entregue</option>
+                        <option value="cancelado">Marcar como cancelado</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <button class="btn btn-success">Aplicar em lote</button>
+                </div>
+                <div class="col-md-4 ms-auto">
+                    <label class="form-label">Manter filtro atual</label>
+                    <input type="text" class="form-control" value="{{ status_filter or 'todos' }}" disabled>
+                    <input type="hidden" name="status" value="{{ status_filter }}">
+                </div>
+            </div>
+
+        {% if orders %}
+            <div class="table-responsive">
+                    <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 36px;">
+                                <input type="checkbox" class="form-check-input" id="select-all-orders">
+                            </th>
+                            <th>Pedido</th>
+                            <th>Cliente</th>
+                            <th>Status</th>
+                            <th>Endereço</th>
+                            <th>Itens</th>
+                            <th class="text-end">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                            <tr>
+                                <td>
+                                    <input type="checkbox" class="form-check-input" name="order_ids" value="{{ order.id }}">
+                                </td>
+                                <td class="fw-semibold">#{{ order.id }}</td>
+                                <td>{{ order.user.name }}</td>
+                                <td>
+                                    <span class="badge text-bg-{{ 'success' if order.status == 'entregue' else 'secondary' }}">
+                                        {{ order.status }}
+                                    </span>
+                                </td>
+                                <td>{{ order.delivery_address }}</td>
+                                <td>{{ order.items|length }}</td>
+                                <td class="text-end">R$ {{ '%.2f'|format(order.total) }}</td>
+                            </tr>
+                            <tr>
+                                <td colspan="7" class="bg-light">
+                                    <small class="text-muted">
+                                        Produtos:
+                                        {% for item in order.items %}
+                                            {{ item.product.name }} ({{ item.quantity }}x){{ ', ' if not loop.last }}
+                                        {% endfor %}
+                                    </small>
+                                    <br>
+                                    {% set last_log = latest_status_logs.get(order.id) %}
+                                    {% if last_log %}
+                                        <small class="text-muted">
+                                            Última alteração: {{ last_log.changed_at.strftime('%d/%m/%Y %H:%M:%S') }}
+                                            por {{ last_log.changed_by.name if last_log.changed_by else 'sistema' }}
+                                        </small>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+                <p class="text-muted mb-0">Nenhum pedido recebido para esta loja.</p>
+        {% endif %}
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function () {
+        const selectAll = document.getElementById('select-all-orders');
+        const rowCheckboxes = document.querySelectorAll('input[name="order_ids"]');
+        if (selectAll) {
+            selectAll.addEventListener('change', function () {
+                rowCheckboxes.forEach(cb => { cb.checked = this.checked; });
+            });
+        }
+    })();
+</script>
+{% endblock %}

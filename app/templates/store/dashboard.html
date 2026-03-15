@@ -1,0 +1,298 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard da Loja | Minha Farma{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">{{ store.name }}</h1>
+        <p class="text-muted mb-0">Painel interno da loja</p>
+    </div>
+    <a class="btn btn-outline-secondary" href="{{ url_for('store.store_list') }}">Ver página pública</a>
+</div>
+
+<ul class="nav nav-pills mb-4">
+    <li class="nav-item">
+        <a class="nav-link active" href="{{ url_for('store.store_dashboard', store_id=store.id) }}">Dados da loja</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('store.store_offers', store_id=store.id) }}">Ofertas</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('store.store_orders', store_id=store.id) }}">Pedidos recebidos</a>
+    </li>
+</ul>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4">
+                <h2 class="h5">Informações cadastrais</h2>
+
+                <form method="post">
+                    <div class="border rounded-3 p-3 mb-4 bg-light-subtle">
+                        <h3 class="h6 text-uppercase text-muted mb-3">Identificação</h3>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Nome da loja</label>
+                            <input type="text" name="name" class="form-control" maxlength="150" value="{{ store.name }}" required>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Slug</label>
+                                <input type="text" name="slug" class="form-control" maxlength="150" value="{{ store.slug }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">CNPJ</label>
+                                <input type="text" name="cnpj" class="form-control" maxlength="20" value="{{ store.cnpj or '' }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border rounded-3 p-3 mb-4 bg-light-subtle">
+                        <h3 class="h6 text-uppercase text-muted mb-3">Contato</h3>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Telefone</label>
+                                <input type="text" name="phone" class="form-control" value="{{ store.phone or '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">E-mail de contato</label>
+                                <input type="email" name="contact_email" class="form-control" value="{{ store.contact_email or '' }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border rounded-3 p-3 mb-4 bg-light-subtle">
+                        <h3 class="h6 text-uppercase text-muted mb-3">Endereço</h3>
+
+                        <div class="row g-3">
+                            <div class="col-md-5">
+                                <label class="form-label fw-semibold">CEP</label>
+                                <input type="text" name="zip_code" id="zip_code" class="form-control" maxlength="9" value="{{ store.zip_code or '' }}">
+                                <div id="zip-feedback-dashboard" class="form-text d-none text-danger mt-1">Não foi possível encontrar esse CEP.</div>
+                                <div class="form-text">A consulta preenche o endereço automaticamente.</div>
+                            </div>
+                            <div class="col-md-7">
+                                <label class="form-label fw-semibold">Cidade</label>
+                                <input
+                                    type="text"
+                                    name="city"
+                                    class="form-control"
+                                    id="store-city-input"
+                                    list="store-city-options"
+                                    value="{{ store.city }}"
+                                    placeholder="Digite ou selecione uma cidade"
+                                    required
+                                >
+                                <datalist id="store-city-options">
+                                    <option value="Todo o Brasil"></option>
+                                    {% for option in cities %}
+                                        <option value="{{ option }}"></option>
+                                    {% endfor %}
+                                </datalist>
+                            </div>
+                        </div>
+
+                        <div class="mb-0 mt-3">
+                            <label class="form-label fw-semibold">Endereço</label>
+                            <input type="text" name="address" class="form-control" value="{{ store.address or '' }}">
+                            <div class="form-text">Rua e bairro também são atualizados pelo CEP.</div>
+                        </div>
+
+                        <div class="mb-0 mt-3">
+                            <label class="form-label fw-semibold">Bairro</label>
+                            <input type="text" name="neighborhood" class="form-control" value="{{ store.neighborhood or '' }}">
+                        </div>
+
+                        <div class="form-check mt-3">
+                            <input class="form-check-input" type="checkbox" name="is_national" value="1" id="is_national" {% if store.city == 'Todo o Brasil' %}checked{% endif %}>
+                            <label class="form-check-label fw-semibold" for="is_national">Exibir para todo o Brasil</label>
+                        </div>
+                        <div class="form-text">Marque para remover a limitação por cidade.</div>
+                    </div>
+
+                    <div class="border rounded-3 p-3 mb-4 bg-light-subtle">
+                        <h3 class="h6 text-uppercase text-muted mb-3">Operação</h3>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Raio de entrega (km)</label>
+                                <input type="number" name="delivery_radius_km" class="form-control" step="0.1" min="0" value="{{ store.delivery_radius_km }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Banner (URL)</label>
+                                <input type="url" name="banner_url" class="form-control" value="{{ store.banner_url or '' }}">
+                            </div>
+                        </div>
+
+                        <div class="form-check form-switch mt-3">
+                            <input class="form-check-input" type="checkbox" name="is_active" value="1" id="is_active" {% if store.is_active %}checked{% endif %}>
+                            <label class="form-check-label fw-semibold" for="is_active">Loja ativa</label>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success">Salvar dados</button>
+                        <a href="{{ url_for('store.store_offers', store_id=store.id) }}" class="btn btn-outline-success">Gerenciar ofertas</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4">
+                <h2 class="h5">Visão geral</h2>
+                <div class="row g-3 mt-1">
+                    <div class="col-4"><strong>Produtos:</strong> {{ total_products }}</div>
+                    <div class="col-4"><strong>Ofertas:</strong> {{ total_offers }}</div>
+                    <div class="col-4"><strong>Pedidos:</strong> {{ total_orders }}</div>
+                </div>
+                <div class="mt-4">
+                    <h3 class="h6">Últimos pedidos</h3>
+                    {% if recent_orders %}
+                        <ul class="list-group">
+                            {% for order in recent_orders %}
+                                <li class="list-group-item border-0 border-bottom">
+                                    <div class="d-flex justify-content-between">
+                                        <span>#{{ order.id }} - {{ order.delivery_address }}</span>
+                                        <span>R$ {{ '%.2f'|format(order.total) }}</span>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted mb-0">Ainda não há pedidos.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const isNationalCheckbox = document.getElementById('is_national');
+    const cityInput = document.getElementById('store-city-input');
+    const zipInput = document.querySelector('input[name="zip_code"]');
+    const addressInput = document.querySelector('input[name="address"]');
+    const neighborhoodInput = document.querySelector('input[name="neighborhood"]');
+    const zipFeedback = document.getElementById('zip-feedback-dashboard');
+    let zipTimer = null;
+
+    const syncCityState = function () {
+        if (!isNationalCheckbox || !cityInput) {
+            return;
+        }
+
+        cityInput.disabled = isNationalCheckbox.checked;
+        if (isNationalCheckbox.checked) {
+            cityInput.value = 'Todo o Brasil';
+        }
+    };
+
+    isNationalCheckbox.addEventListener('change', syncCityState);
+    syncCityState();
+
+    const onlyDigits = function (value) {
+        return value.replace(/\D/g, '');
+    };
+
+    const formatZipCode = function (digits) {
+        if (digits.length <= 5) {
+            return digits;
+        }
+        return digits.slice(0, 5) + '-' + digits.slice(5, 8);
+    };
+
+    const showFeedback = function (message) {
+        if (!zipFeedback) {
+            return;
+        }
+        zipFeedback.textContent = message;
+        zipFeedback.classList.remove('d-none');
+    };
+
+    const hideFeedback = function () {
+        if (!zipFeedback) {
+            return;
+        }
+        zipFeedback.classList.add('d-none');
+    };
+
+    const setField = function (field, value) {
+        if (field && value) {
+            field.value = value;
+        }
+    };
+
+    const setAddressByCep = async function (digits) {
+        if (digits.length !== 8) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
+            const data = await response.json();
+
+            if (data.erro) {
+                showFeedback('CEP não encontrado.');
+                return;
+            }
+
+            hideFeedback();
+            setField(addressInput, data.logradouro || '');
+            setField(neighborhoodInput, data.bairro || '');
+
+            if (data.localidade && cityInput && !isNationalCheckbox.checked) {
+                cityInput.value = data.localidade;
+            }
+        } catch (error) {
+            console.error('Não foi possível buscar endereço pelo CEP:', error);
+            showFeedback('Erro ao consultar CEP. Tente novamente.');
+        }
+    };
+
+    const handleCepInput = function (event) {
+        const digits = onlyDigits(event.target.value).slice(0, 8);
+        zipInput.value = formatZipCode(digits);
+
+        if (zipTimer) {
+            clearTimeout(zipTimer);
+        }
+
+        if (digits.length !== 8) {
+            hideFeedback();
+            return;
+        }
+
+        zipTimer = setTimeout(function () {
+            setAddressByCep(digits);
+        }, 300);
+    };
+
+    if (zipInput) {
+        zipInput.value = '{{ store.zip_code or "" }}';
+        zipInput.addEventListener('input', function (event) {
+            handleCepInput(event);
+        });
+
+        zipInput.addEventListener('change', async function (event) {
+            const digits = onlyDigits(event.target.value).slice(0, 8);
+            zipInput.value = formatZipCode(digits);
+            await setAddressByCep(digits);
+        });
+
+        zipInput.addEventListener('blur', function (event) {
+            const digits = onlyDigits(event.target.value).slice(0, 8);
+            zipInput.value = formatZipCode(digits);
+        });
+    }
+});
+</script>
+
+{% endblock %}

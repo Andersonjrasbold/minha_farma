@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Lojas | Minha Farma{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Lojas cadastradas</h1>
+</div>
+<div class="row g-4">
+    {% for store in stores %}
+        <div class="col-md-6 col-xl-4">
+            <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
+                <img src="{{ store.banner_url }}" class="store-banner" alt="{{ store.name }}">
+                <div class="card-body">
+                    <h2 class="h5">{{ store.name }}</h2>
+                    <p class="text-muted mb-2">{{ store.neighborhood }} • {{ store.city }}</p>
+                    <p class="mb-3">Raio de entrega: {{ store.delivery_radius_km }} km</p>
+                    <a href="{{ url_for('store.store_detail', slug=store.slug) }}" class="btn btn-outline-success">Abrir loja</a>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

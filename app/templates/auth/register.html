@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Criar conta | Minha Farma{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4 p-lg-5">
+                <h1 class="h3 mb-4">Criar conta</h1>
+                <form method="post">
+                    <div class="mb-3">
+                        <label class="form-label">Nome</label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">E-mail</label>
+                        <input type="email" name="email" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Senha</label>
+                        <input type="password" name="password" class="form-control" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">Cidade</label>
+                        <select name="city" class="form-select" required>
+                            {% for city in cities %}
+                                <option value="{{ city }}">{{ city }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button class="btn btn-success w-100">Criar conta</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}Meus dados | Minha Farma{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4 p-lg-5">
+                <h1 class="h3 mb-4">Meus dados</h1>
+                <form method="post">
+                    <div class="mb-3">
+                        <label class="form-label">Nome</label>
+                        <input type="text" name="name" class="form-control" required value="{{ current_user.name }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">E-mail</label>
+                        <input type="email" name="email" class="form-control" required value="{{ current_user.email }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Cidade</label>
+                        <select name="city" class="form-select" required>
+                            {% for city in cities %}
+                                <option value="{{ city }}" {% if city == current_user.city %}selected{% endif %}>{{ city }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">Nova senha (opcional)</label>
+                        <input type="password" name="password" class="form-control" placeholder="Deixe em branco para manter a mesma senha">
+                    </div>
+                    <button class="btn btn-success w-100">Salvar alterações</button>
+                </form>
+                <div class="row g-2 mt-4">
+                    <div class="col-md-6">
+                        <a class="btn btn-outline-success w-100" href="{{ url_for('auth.profile_orders') }}">
+                            Meus pedidos
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a class="btn btn-outline-secondary w-100" href="{{ url_for('auth.profile_addresses') }}">
+                            Meus endereços
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

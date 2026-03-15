@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Checkout | Minha Farma{% endblock %}
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4">
+                <h1 class="h3 mb-4">Finalizar pedido</h1>
+                <form method="post">
+                    <div class="mb-3">
+                        <label class="form-label">Endereço de entrega</label>
+                        <input
+                            type="text"
+                            name="delivery_address"
+                            class="form-control"
+                            placeholder="Rua, número, bairro"
+                            value="{{ default_delivery_address or '' }}"
+                            required
+                        >
+                    </div>
+                    <button class="btn btn-success btn-lg">Confirmar pedido</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4">
+                <h2 class="h5 mb-3">Resumo</h2>
+                {% for item in items %}
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>{{ item.quantity }}x {{ item.product.name }}</span>
+                        <span>R$ {{ '%.2f'|format(item.subtotal) }}</span>
+                    </div>
+                {% endfor %}
+                <hr>
+                <div class="d-flex justify-content-between fw-bold fs-5">
+                    <span>Total</span>
+                    <span>R$ {{ '%.2f'|format(total) }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

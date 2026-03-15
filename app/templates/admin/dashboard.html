@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard da Plataforma | Minha Farma{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h1 class="h3 mb-1">Dashboard da Plataforma</h1>
+        <p class="text-muted mb-0">
+            {% if access_denied %}
+                Acesso não autorizado para a sua conta.
+            {% else %}
+                Visão geral da gestão de farmácias.
+            {% endif %}
+        </p>
+    </div>
+    <a class="btn btn-outline-success" href="{{ url_for('store.store_list') }}">Ver lojas públicas</a>
+</div>
+
+{% if access_denied %}
+    <div class="alert alert-warning">
+        Você não tem acesso à área de parceiros. Fale com o time Minha Farma para solicitar permissão.
+    </div>
+    {% if stores %}
+        <p class="text-muted">Ainda há lojas vinculadas para esta conta.</p>
+    {% endif %}
+{% else %}
+
+<form class="row g-3 mb-4" method="get" action="{{ url_for('admin.dashboard') }}">
+    <div class="col-md-6">
+        <label class="form-label">Filtrar por cidade</label>
+        <select name="cidade" class="form-select" onchange="this.form.submit()">
+            <option value="">Todas as cidades</option>
+            {% for option in city_options %}
+                <option value="{{ option }}" {% if option == city %}selected{% endif %}>{{ option }}</option>
+            {% endfor %}
+        </select>
+    </div>
+</form>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="card border-0 shadow-sm rounded-4"><div class="card-body">
+        <p class="text-muted mb-1">Lojas</p><h2 class="h4">Total {{ total_stores }}</h2>
+        <small class="text-success">Ativas: {{ active_stores }}</small><br>
+        <small class="text-muted">Inativas: {{ inactive_stores }}</small>
+    </div></div></div>
+    <div class="col-md-3"><div class="card border-0 shadow-sm rounded-4"><div class="card-body">
+        <p class="text-muted mb-1">Produtos</p><h2 class="h4">Total {{ total_products }}</h2>
+        <small class="text-success">Ativos: {{ active_products }}</small>
+    </div></div></div>
+    <div class="col-md-3"><div class="card border-0 shadow-sm rounded-4"><div class="card-body">
+        <p class="text-muted mb-1">Ofertas</p><h2 class="h4">Total {{ total_offers }}</h2>
+        <small class="text-success">Ativas: {{ active_offers }}</small>
+    </div></div></div>
+    <div class="col-md-3"><div class="card border-0 shadow-sm rounded-4"><div class="card-body">
+        <p class="text-muted mb-1">Pedidos</p><h2 class="h4">{{ total_orders }}</h2>
+        <small class="text-muted">Faturamento: R$ {{ '%.2f'|format(total_order_value) }}</small>
+    </div></div></div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4">
+    <div class="card-header bg-transparent border-0 pt-4 px-4">
+        <h2 class="h5 mb-0">Lojas cadastradas{% if city %} - {{ city }}{% endif %}</h2>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Loja</th>
+                        <th>Cidade</th>
+                        <th>Status</th>
+                        <th>Produtos</th>
+                        <th>Ofertas</th>
+                        <th>Pedidos</th>
+                        <th class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for store in stores %}
+                        <tr>
+                            <td class="fw-semibold">{{ store.name }}</td>
+                            <td>{{ store.city }}</td>
+                            <td>
+                                <span class="badge text-bg-{{ 'success' if store.is_active else 'secondary' }}">
+                                    {{ 'Ativa' if store.is_active else 'Inativa' }}
+                                </span>
+                            </td>
+                            <td>{{ products_by_store.get(store.id, 0) }}</td>
+                            <td>{{ offers_by_store.get(store.id, 0) }}</td>
+                            <td>{{ orders_by_store.get(store.id, 0) }}</td>
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-success" href="{{ url_for('store.store_detail', slug=store.slug) }}">Abrir</a>
+                                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('store.store_dashboard', store_id=store.id) }}">Painel</a>
+                                <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('store.store_offers', store_id=store.id) }}">Ofertas</a>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">Nenhuma loja encontrada.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+    </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block title %}Início | Minha Farma{% endblock %}
+{% block content %}
+<section class="hero rounded-4 p-4 p-lg-5 mb-4 text-white">
+    <div class="row align-items-center g-4">
+        <div class="col-lg-7">
+            <span class="badge bg-light text-success mb-3">Entregas por raio e cidade</span>
+            <h1 class="display-6 fw-bold">Ofertas da sua região primeiro.</h1>
+            <p class="lead mb-4">Exibimos somente farmácias que atendem {{ location.city }} dentro do raio de entrega.</p>
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="{{ url_for('store.store_list') }}" class="btn btn-light btn-lg">Explorar lojas</a>
+                <a href="#ofertas" class="btn btn-outline-light btn-lg">Ver ofertas</a>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card shadow border-0 rounded-4">
+                <div class="card-body p-4 text-dark">
+                    <div class="text-muted small">Localização atual</div>
+                    <h3 class="h4 mb-3">{{ location.city }}</h3>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="mini-stat">
+                                <strong>{{ stores|length }}</strong>
+                                <span>Lojas no raio</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="mini-stat">
+                                <strong>{{ offers|length }}</strong>
+                                <span>Ofertas ativas</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h4 mb-0">Categorias</h2>
+    </div>
+    <div class="row g-3">
+        {% for category in categories %}
+            <div class="col-6 col-md-4 col-lg-3">
+                <div class="category-pill">{{ category.name }}</div>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+
+<section id="ofertas" class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h4 mb-0">Ofertas em {{ location.city }}</h2>
+    </div>
+    <div class="row g-4">
+        {% for offer in offers %}
+            <div class="col-md-6 col-xl-4">
+                <div class="card offer-card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
+                    <img src="{{ offer.image_url }}" class="card-img-top offer-image" alt="{{ offer.title }}">
+                    <div class="card-body">
+                        <div class="small text-success fw-semibold mb-2">{{ offer.store.name }}</div>
+                        <h3 class="h5">{{ offer.title }}</h3>
+                        <p class="text-muted">{{ offer.description }}</p>
+                        <a href="{{ url_for('store.store_detail', slug=offer.store.slug) }}" class="btn btn-success">Ir para loja</a>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-warning">Ainda não há ofertas para essa cidade.</div>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+
+<section>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h4 mb-0">Farmácias atendendo sua região</h2>
+    </div>
+    <div class="row g-4">
+        {% for item in stores %}
+            <div class="col-md-6 col-xl-4">
+                <div class="card h-100 border-0 shadow-sm rounded-4">
+                    <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                                    <div>
+                                        <h3 class="h5 mb-1">{{ item.store.name }}</h3>
+                                        <div class="text-muted small">{{ item.store.neighborhood }} • {{ item.store.city }}</div>
+                                    </div>
+                                    {% if item.distance is none %}
+                                        <span class="badge text-bg-success">Todo o Brasil</span>
+                                    {% else %}
+                                        <span class="badge text-bg-light">{{ item.distance }} km</span>
+                                    {% endif %}
+                                </div>
+                        <p class="mb-3">Entrega em até {{ item.store.delivery_radius_km }} km de raio.</p>
+                        <a href="{{ url_for('store.store_detail', slug=item.store.slug) }}" class="btn btn-outline-success">Ver loja</a>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info">Nenhuma loja encontrada dentro do raio para {{ location.city }}.</div>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

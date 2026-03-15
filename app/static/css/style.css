@@ -1,0 +1,119 @@
+:root {
+    --mf-green: #19a55b;
+    --mf-dark: #0f172a;
+    --mf-bg: #f4f7fb;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: var(--mf-bg);
+    color: var(--mf-dark);
+    min-height: 100vh;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.mf-main {
+    flex: 1;
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+}
+
+.mf-footer {
+    margin-top: auto;
+    margin-bottom: 0;
+}
+
+.hero {
+    background: linear-gradient(135deg, #0f9d58 0%, #057a55 100%);
+}
+
+.mini-stat {
+    background: #f8fafc;
+    border-radius: 1rem;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+}
+
+.mini-stat strong {
+    font-size: 1.5rem;
+}
+
+.category-pill {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 999px;
+    padding: .9rem 1rem;
+    text-align: center;
+    font-weight: 600;
+}
+
+.offer-image,
+.product-image,
+.store-banner,
+.store-hero {
+    width: 100%;
+    object-fit: cover;
+}
+
+.offer-image,
+.store-banner {
+    height: 220px;
+}
+
+.product-image {
+    height: 240px;
+}
+
+.store-hero {
+    height: 280px;
+}
+
+.card {
+    border-radius: 1.25rem !important;
+}
+
+.address-shell-card {
+    background: #fff;
+    border: 2px solid #c6d4e6 !important;
+    border-radius: 1rem;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.address-input-card {
+    background: #f8fbff;
+    border: 2px solid #d6e0ee;
+    border-radius: 0.75rem;
+    padding: 0.85rem;
+}
+
+.address-list {
+    border-top: 2px solid #d9e2f0;
+}
+
+.address-list-item {
+    border-bottom: 2px solid #edf2f7;
+}
+
+.address-list-item:last-child {
+    border-bottom: 1px solid transparent !important;
+}
+
+.address-main-form {
+    display: inline-flex;
+    margin-top: 0.25rem;
+}
+
+.address-main-checkbox {
+    width: 1.15rem;
+    height: 1.15rem;
+    margin-top: 0.05rem;
+}
+
+.form-check-label {
+    color: #475569;
+    font-weight: 500;
+}

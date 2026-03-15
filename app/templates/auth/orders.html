@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+
+{% block title %}Meus pedidos | Minha Farma{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">Meus pedidos</h1>
+        <p class="text-muted mb-0">Acompanhe os seus pedidos recentes</p>
+    </div>
+    <a class="btn btn-outline-secondary" href="{{ url_for('auth.profile') }}">Voltar aos meus dados</a>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4">
+    <div class="card-body">
+        {% if orders %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th>Pedido</th>
+                        <th>Loja</th>
+                        <th>Status</th>
+                        <th>Endereço</th>
+                        <th>Repetir</th>
+                        <th class="text-end">Total</th>
+                        <th>Data</th>
+                        <th class="text-end">Ações</th>
+                        <th class="text-end">Repetir</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                            <tr>
+                                <td class="fw-semibold">#{{ order.id }}</td>
+                                <td>{{ order.store.name }}</td>
+                                <td>
+                                    <span class="badge text-bg-{{ 'success' if order.status == 'entregue' else 'secondary' }}">
+                                        {{ order.status|capitalize }}
+                                    </span>
+                                </td>
+                                <td>{{ order.delivery_address }}</td>
+                                <td class="repeat-status-cell">
+                                    {% if order.can_repeat_order %}
+                                        {% if order.unavailable_items_count > 0 %}
+                                            <span class="badge repeat-status-badge text-bg-warning">Parcial</span>
+                                        {% else %}
+                                            <span class="badge repeat-status-badge text-bg-success">Disponível</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge repeat-status-badge text-bg-danger">Indisponível</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">R$ {{ '%.2f'|format(order.total) }}</td>
+                                <td>{{ order.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                <td class="text-end">
+                                    <a class="btn btn-sm btn-outline-success" href="{{ url_for('auth.profile_order_detail', order_id=order.id) }}">
+                                        Ver detalhes
+                                    </a>
+                                </td>
+                                <td class="text-end">
+                                    {% if order.can_repeat_order %}
+                                        <a class="btn btn-sm btn-outline-dark repeat-order-btn" href="{{ url_for('store.repeat_order', order_id=order.id) }}" data-order-id="{{ order.id }}">
+                                            Repetir
+                                        </a>
+                                    {% else %}
+                                        <button class="btn btn-sm btn-outline-dark" type="button" disabled>
+                                            Repetir
+                                        </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="9" class="bg-light">
+                                    <small class="text-muted">
+                                        Produtos:
+                                        {% for item in order.items %}
+                                            {{ item.product.name }} ({{ item.quantity }}x){{ ', ' if not loop.last }}
+                                        {% endfor %}
+                                    </small>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted mb-0">Você ainda não fez nenhum pedido.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    const alertContainer = document.querySelector('main .container');
+
+    function setCartBadge(count) {
+        const badge = document.getElementById('cart-count-badge');
+        if (!badge) return;
+        badge.textContent = String(count);
+        badge.classList.remove('bg-success', 'bg-secondary');
+        badge.classList.add(count > 0 ? 'bg-success' : 'bg-secondary');
+    }
+
+    function showAlert(type, message) {
+        if (!alertContainer) return;
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type} alert-dismissible fade show`;
+        alert.role = 'alert';
+        alert.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        alertContainer.prepend(alert);
+        setTimeout(() => alert.classList.remove('show'), 5000);
+    }
+
+    document.querySelectorAll('.repeat-order-btn').forEach((button) => {
+        button.addEventListener('click', async function (event) {
+            event.preventDefault();
+            const originalLabel = button.textContent.trim();
+            const originalHtml = button.innerHTML;
+            button.classList.add('disabled');
+            button.setAttribute('aria-busy', 'true');
+            button.setAttribute('aria-disabled', 'true');
+            button.style.pointerEvents = 'none';
+            button.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Repetindo...';
+
+            const row = button.closest('tr');
+            const statusCell = row ? row.querySelector('.repeat-status-cell .repeat-status-badge') : null;
+
+            try {
+                const response = await fetch(button.href, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                });
+
+                const payload = await response.json();
+                setCartBadge(payload.cart_count);
+
+                if (statusCell) {
+                    if (payload.unavailable_count > 0 && payload.added_count > 0) {
+                        statusCell.className = 'badge repeat-status-badge text-bg-warning';
+                        statusCell.textContent = 'Parcial';
+                    } else if (payload.unavailable_count === 0 && payload.added_count > 0) {
+                        statusCell.className = 'badge repeat-status-badge text-bg-success';
+                        statusCell.textContent = 'Disponível';
+                    } else {
+                        statusCell.className = 'badge repeat-status-badge text-bg-danger';
+                        statusCell.textContent = 'Indisponível';
+                    }
+                }
+
+                showAlert(payload.message_type || 'info', payload.message);
+            } catch (error) {
+                showAlert('danger', 'Não foi possível repetir o pedido. Tente novamente.');
+            } finally {
+                button.classList.remove('disabled');
+                button.removeAttribute('aria-busy');
+                button.removeAttribute('aria-disabled');
+                button.style.pointerEvents = '';
+                button.innerHTML = originalHtml;
+            }
+        });
+    });
+})();
+</script>
+{% endblock %}

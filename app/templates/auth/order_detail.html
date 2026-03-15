@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+
+{% block title %}Pedido #{{ order.id }} | Minha Farma{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">Pedido #{{ order.id }}</h1>
+        <p class="text-muted mb-0">Acompanhe os itens e o histórico do pedido.</p>
+    </div>
+    <a class="btn btn-outline-secondary" href="{{ url_for('auth.profile_orders') }}">Voltar aos pedidos</a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body">
+                <div class="mb-3">
+                    <span class="badge fs-6 text-bg-{{ 'success' if order.status == 'entregue' else 'danger' if order.status == 'cancelado' else 'secondary' }}">
+                        Status: {{ order.status|capitalize }}
+                    </span>
+                </div>
+                <h2 class="h5">Itens do pedido</h2>
+                {% if order.items %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Produto</th>
+                                    <th class="text-center">Qtd</th>
+                                    <th class="text-end">Preço unitário</th>
+                                    <th class="text-end">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in order.items %}
+                                    <tr>
+                                        <td>{{ item.product.name }}</td>
+                                        <td class="text-center">{{ item.quantity }}</td>
+                                        <td class="text-end">R$ {{ '%.2f'|format(item.unit_price) }}</td>
+                                        <td class="text-end">R$ {{ '%.2f'|format(item.unit_price * item.quantity) }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted mb-0">Nenhum item encontrado para este pedido.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body">
+                <h2 class="h5">Resumo</h2>
+                <p class="mb-1"><strong>Loja:</strong> {{ order.store.name }}</p>
+                <p class="mb-1">
+                    <strong>Status atual:</strong>
+                    <span class="badge text-bg-{{ 'success' if order.status == 'entregue' else 'secondary' }}">
+                        {{ order.status|capitalize }}
+                    </span>
+                </p>
+                {% if can_repeat_order %}
+                    {% if unavailable_items_count > 0 %}
+                        <p class="mb-1">
+                            <strong>Repetir pedido:</strong>
+                            <span class="badge text-bg-warning">Repetível parcialmente</span>
+                        </p>
+                    {% else %}
+                        <p class="mb-1">
+                            <strong>Repetir pedido:</strong>
+                            <span class="badge text-bg-success">Repetível</span>
+                        </p>
+                    {% endif %}
+                {% else %}
+                    <p class="mb-1">
+                        <strong>Repetir pedido:</strong>
+                        <span class="badge text-bg-danger">Indisponível</span>
+                    </p>
+                {% endif %}
+                <p class="mb-1"><strong>Endereço:</strong> {{ order.delivery_address }}</p>
+                <p class="mb-3"><strong>Data:</strong> {{ order.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+                <div class="d-flex justify-content-between">
+                    <span>Total</span>
+                    <strong>R$ {{ '%.2f'|format(order.total) }}</strong>
+                </div>
+                <div class="d-flex gap-2 mt-4">
+                    <a id="receipt-order-btn" class="btn btn-sm btn-outline-primary" href="{{ url_for('auth.profile_order_receipt', order_id=order.id) }}">
+                        Baixar comprovante
+                    </a>
+                    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('store.store_detail', slug=order.store.slug) }}">
+                        Ver loja
+                    </a>
+                    {% if can_repeat_order %}
+                        <a class="btn btn-sm btn-outline-dark" href="{{ url_for('store.repeat_order', order_id=order.id) }}">
+                            Repetir pedido{% if unavailable_items_count > 0 %} (itens disponíveis){% endif %}
+                        </a>
+                    {% else %}
+                        <span class="d-inline-block" tabindex="0" data-bs-toggle="tooltip" data-bs-title="Sem itens disponíveis para repetir este pedido no momento.">
+                            <button class="btn btn-sm btn-outline-dark" type="button" disabled>
+                                Repetir pedido
+                            </button>
+                        </span>
+                    {% endif %}
+                </div>
+                {% if not can_repeat_order %}
+                    <p class="text-warning small mt-2 mb-0">
+                        {% if unavailable_items_count > 0 %}
+                            {{ unavailable_items_count }} {{ 'item não disponível' if unavailable_items_count == 1 else 'itens não disponíveis' }} para repetir neste momento.
+                        {% else %}
+                            Nenhum item disponível para repetir neste momento.
+                        {% endif %}
+                    </p>
+                {% elif unavailable_items_count > 0 %}
+                    <p class="text-info small mt-2 mb-0">
+                        Há {{ available_items_count }} itens disponíveis para repetir.
+                    </p>
+                {% endif %}
+                {% if unavailable_items_count > 0 %}
+                    <p class="text-muted small mt-2 mb-0">
+                        Este pedido contém {{ unavailable_items_count }} {{ 'item indisponível' if unavailable_items_count == 1 else 'itens indisponíveis' }} para repetição.
+                    </p>
+                {% endif %}
+                {% if order.status == 'cancelado' %}
+                    <div class="alert alert-danger mt-3 mb-0">
+                        Este pedido foi cancelado e não pode mais sofrer alterações de status.
+                    </div>
+                {% elif order.status == 'entregue' %}
+                    <div class="alert alert-success mt-3 mb-0">
+                        Pedido entregue. Acompanhe próximos pedidos no histórico da sua conta.
+                    </div>
+                {% elif order.status == 'preparando' %}
+                    <p class="text-muted small mt-3 mb-0">Seu pedido está em preparação. Você ainda pode cancelar se necessário.</p>
+                {% elif order.status == 'pendente' %}
+                    <p class="text-muted small mt-3 mb-0">Seu pedido está aguardando confirmação. Você ainda pode cancelar se necessário.</p>
+                {% else %}
+                    <p class="text-muted small mt-3 mb-0">Acompanhe as atualizações no histórico abaixo.</p>
+                {% endif %}
+                {% if order.status in ['pendente', 'preparando'] %}
+                    <form id="cancel-order-form" class="mt-3" method="post" action="{{ url_for('auth.profile_order_cancel', order_id=order.id) }}" style="display: inline-block;">
+                        <button id="cancel-order-btn" type="submit" class="btn btn-sm btn-outline-danger">
+                            Cancelar pedido
+                        </button>
+                    </form>
+                {% else %}
+                    <button class="btn btn-sm btn-outline-danger mt-3" type="button" disabled>
+                        Cancelar pedido
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 mt-3">
+            <div class="card-body">
+                <h2 class="h5">Histórico</h2>
+                {% if status_logs %}
+                    <ul class="list-group list-group-flush">
+                        {% for log in status_logs %}
+                            <li class="list-group-item border-0 px-0">
+                                <div class="d-flex justify-content-between">
+                                    <span>
+                                        De <strong>{{ log.previous_status or 'pendente' }}</strong>
+                                        para <strong>{{ log.new_status }}</strong>
+                                    </span>
+                                    <small class="text-muted">
+                                        {{ log.changed_at.strftime('%d/%m/%Y %H:%M:%S') }}
+                                    </small>
+                                </div>
+                                <small class="text-muted">Por: {{ log.changed_by.name if log.changed_by else 'sistema' }}</small>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% elif order.status == 'cancelado' %}
+                    <div class="alert alert-danger mb-0">
+                        Pedido cancelado manualmente no momento da solicitação. (sem log adicional disponível)
+                    </div>
+                {% else %}
+                    <p class="text-muted mb-0">Ainda não houve alterações de status.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    tooltipTriggerList.forEach((el) => new bootstrap.Tooltip(el));
+
+    function setButtonBusy(button, label) {
+        button.classList.add('disabled');
+        button.setAttribute('aria-busy', 'true');
+        button.setAttribute('aria-disabled', 'true');
+        button.style.pointerEvents = 'none';
+        button.dataset.originalHtml = button.innerHTML;
+        button.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>${label}`;
+    }
+
+    (function () {
+        const cancelForm = document.getElementById('cancel-order-form');
+        const cancelButton = document.getElementById('cancel-order-btn');
+
+        if (!cancelForm || !cancelButton) {
+            return;
+        }
+
+        cancelForm.addEventListener('submit', function (event) {
+            if (cancelButton.getAttribute('aria-busy') === 'true') {
+                event.preventDefault();
+                return;
+            }
+
+            if (!window.confirm('Deseja realmente cancelar este pedido?')) {
+                event.preventDefault();
+                return;
+            }
+
+            setButtonBusy(cancelButton, 'Cancelando...');
+        });
+    })();
+
+    (function () {
+        const receiptButton = document.getElementById('receipt-order-btn');
+        if (!receiptButton) {
+            return;
+        }
+
+        receiptButton.addEventListener('click', function () {
+            setButtonBusy(receiptButton, 'Gerando comprovante...');
+            setTimeout(() => {
+                if (receiptButton.getAttribute('aria-busy') === 'true') {
+                    receiptButton.classList.remove('disabled');
+                    receiptButton.removeAttribute('aria-busy');
+                    receiptButton.removeAttribute('aria-disabled');
+                    receiptButton.style.pointerEvents = '';
+                    if (receiptButton.dataset.originalHtml) {
+                        receiptButton.innerHTML = receiptButton.dataset.originalHtml;
+                    }
+                }
+            }, 1200);
+        });
+    })();
+</script>
+{% endblock %}
+
